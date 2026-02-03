@@ -1,5 +1,7 @@
+current: run
+
 generate:
 	python3 -m tw.lsp
 
-run:
+run: generate
 	python3 -m tw
