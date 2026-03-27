@@ -14,16 +14,6 @@ fn parse_oklch_str(oklch: &str) -> Option<(&str, &str, &str)> {
     Some((a.strip_suffix('%')?, b, c))
 }
 
-fn hex(v: Srgb<f64>) -> String {
-    const M: f64 = 255.0;
-    format!(
-        "#{:02x}{:02x}{:02x}",
-        (v.red * M).round() as u8,
-        (v.green * M).round() as u8,
-        (v.blue * M).round() as u8
-    )
-}
-
 fn parse() -> HashMap<String, HashMap<String, Oklch<f64>>> {
     let data: HashMap<String, Value> = serde_json::from_str(SOURCE).unwrap();
     let mut colors = data.keys().map(|v| v.as_str()).collect::<Vec<_>>();
@@ -67,6 +57,11 @@ fn parse() -> HashMap<String, HashMap<String, Oklch<f64>>> {
     output
 }
 
+fn cap1(x: &str) -> String {
+    let (a, b) = x.split_at(1);
+    format!("{}{}", a.to_uppercase(), b)
+}
+
 fn main() {
     let data = parse();
 
@@ -77,9 +72,9 @@ fn main() {
     for (color, value) in &data {
         for (shade, oklch) in value {
             n += 1;
-            let full_color = format!("{}_{shade}", color.to_uppercase());
-            print!("pub const {full_color}: Color = Color {{");
-            print!("name: \"{full_color}\",");
+            let color_struct = format!("{}_{shade}", color.to_uppercase());
+            print!("pub const {color_struct}: Color = Color {{");
+            print!("name: \"{}{shade}\",", cap1(color));
             print!(
                 "oklch: Oklch::new_const({a:?}, {b:?}, OklabHue::new({c:?}))",
                 a = oklch.l,
@@ -93,10 +88,9 @@ fn main() {
     println!("pub const ALL_COLORS: [Color; {n}] = [");
     for (color, value) in &data {
         for shade in value.keys() {
-            let full_color = format!("{}_{shade}", color.to_uppercase());
-            println!("{full_color},");
+            let color_struct = format!("{}_{shade}", color.to_uppercase());
+            println!("{color_struct},");
         }
     }
     println!("];");
-    // println!("{:?}", colors)
 }
